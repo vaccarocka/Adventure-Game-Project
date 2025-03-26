@@ -1,27 +1,37 @@
+#Saige Vacca
+#CSCI 150.50
+#3.24.2025
+#Assignment 9
+
 """
 game.py
 
-This script imports and uses the gamefunctions module to provide basic 
-game interactions, such as displaying a welcome message, shop menu, 
-and generating a random monster.
+This script imports and uses the gamefunctions module to provide exciting
+game interactions, such as displaying the initial welcome message and letting
+adventurers choose their own path.
 """
 
-import gamefunction3
+import gamefunctions3
+import random
 
-def main():
-    """Main function to interact with the game."""
-    player_name = input("Enter your name: ")
-    gamefunction3.print_welcome(player_name)
+player_name = input("Enter your player name (Choose wisely!): ")
+gamefunctions3.print_welcome(player_name)
+curr_HP = 30
+curr_gold = 10
+play_game = True
 
-    print("\nWelcome to the shop!")
-    gamefunction3.print_shop_menu("Potion", 10, "Sword", 50)
+while play_game == True:
+    gamefunctions3.status_message(curr_HP, curr_gold)
+    action_select = input("1) Leave town (Fight Monster)\n2) Sleep (Restore HP for 5 Gold)\n3) Quit\n")
+    if action_select == "1":
+        curr_HP, curr_gold = gamefunctions3.monster_fight(curr_HP, curr_gold)
+        if curr_HP < 1:
+            break
+    elif action_select == "2":
+        curr_HP, curr_gold = gamefunctions3.playersleep(curr_HP, curr_gold)
+    elif action_select == "3":
+        break
+    else:
+        print("Try again Nerd!")
 
-    monster = gamefunction3.new_random_monster()
-    print("\nA wild monster appears!")
-    print(f"Name: {monster['name']}")
-    print(f"Description: {monster['description']}")
-    print(f"Health: {monster['health']}")
-    print(f"Money: {monster['money']}")
-
-if __name__ == "__main__":
-    main()
+print("Game Over! Dun dun dunnn.")
