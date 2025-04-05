@@ -14,29 +14,34 @@ adventurers choose their own path.
 import gamefunctions
 import random
 
-player_name = input("Enter your player name (Choose wisely!): ")
-gamefunctions.print_welcome(player_name)
-curr_HP = 30
-curr_gold = 10
 play_game = True
 
-curr_inventory = []
-
-curr_equipped = {
-    "weapon": {"name": "none"},
-    "shield": {"name": "none"},
-    "special item": {"name": "none"}
-}
-
 shop_items = [
-    {"name": "sword", "type": "weapon", "uses": 10, "price":3, "description": "increases damage that you do by 10"},
-    {"name": "buckler", "type": "shield", "uses": 25, "price":3, "description": "reduces damage that you take a little bit."},
-    {"name": "shiny ring", "type": "special item", "uses": 1, "price": 10, "description": "allows you to defeat one monster immediately, single use."}
+    {"name": "Sword", "type": "weapon", "uses": 10, "price":3, "description": "increases damage that you do by 10"},
+    {"name": "Buckler", "type": "shield", "uses": 25, "price":3, "description": "reduces damage that you take a little bit."},
+    {"name": "Shiny Ring", "type": "special item", "uses": 1, "price": 10, "description": "allows you to defeat one monster immediately, single use."}
 ]
+
+start_menu = gamefunctions.main_menu()
+
+if start_menu == "start_new_game":
+    curr_HP = 30
+    curr_gold = 10
+    player_name = input("Enter your player name (Choose wisely!): ")
+    curr_inventory = []
+    curr_equipped = {
+        "weapon": {"name": "none"},
+        "shield": {"name": "none"},
+        "special item": {"name": "none"}
+    }
+elif start_menu == "load_save_file":
+    player_name, curr_HP, curr_gold, curr_inventory, curr_equipped = gamefunctions.load_game()
+
+gamefunctions.print_welcome(player_name)
 
 while play_game == True:
     gamefunctions.status_message(curr_HP, curr_gold)
-    action_select = input("1) Leave town (Fight Monster)\n2) Sleep (Restore HP for 5 Gold)\n3) Browse Shop\n4) Change Equipment\n5) Quit\n")
+    action_select = input("1) Leave town (Fight Monster)\n2) Sleep (Restore HP for 5 Gold)\n3) Browse Shop\n4) Change Equipment\n5) Save and Quit\n6) Quit Without Save\n")
     if action_select == "1":
         curr_HP, curr_gold, curr_equipped = gamefunctions.monster_fight(curr_HP, curr_gold, curr_equipped)
         if curr_HP < 1:
@@ -48,6 +53,9 @@ while play_game == True:
     elif action_select == "4":
         curr_equipped, curr_inventory = gamefunctions.inventory_menu(curr_equipped, curr_inventory)
     elif action_select == "5":
+        gamefunctions.save_game(player_name, curr_HP, curr_gold, curr_inventory, curr_equipped)
+        break
+    elif action_select == "6":
         break
     else:
         print("Try again Nerd!")
