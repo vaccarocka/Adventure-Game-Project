@@ -1,20 +1,20 @@
 #Saige Vacca
 #CSCI 150.50
-#3.30.2025
-#Assignment 10
+#4.13.2025
+#Assignment 12
+
+
 
 """This module contains functions for my simple text-based game, including a
 vegetarian shop system and random monster generation. Functions include
 printing a welcome messages, displaying a veggie-friendly shop menu, handling
 item purchases, and creating random monsters!
-    print_welcome("Player")
-    print_shop_menu("Sword", 10, "Shield", 15)
-    quantity, remaining = purchase_item(10, 50, 2)
-    monster = new_random_monster()"""
+"""
 
 import random
 import json
 from pathlib import Path
+import pygame
 
 def main_menu():
     """Start up game menu with introduction. Allows player to choose new game
@@ -38,9 +38,10 @@ def load_game():
     curr_gold = game_data["gold"]
     curr_inventory = game_data["inventory"]
     curr_equipped = game_data["equipped"]
-    return (player_name, curr_HP, curr_gold, curr_inventory, curr_equipped)
+    map_positions = game_data["map"]
+    return (player_name, curr_HP, curr_gold, curr_inventory, curr_equipped, map_positions)
 
-def save_game(player_name, curr_HP, curr_gold, curr_inventory, curr_equipped):
+def save_game(player_name, curr_HP, curr_gold, curr_inventory, curr_equipped, map_positions):
     """Combines player variables into one dictionary then saves that dictionary
     as a JSON file for later retrieval."""
     game_data = {
@@ -48,7 +49,8 @@ def save_game(player_name, curr_HP, curr_gold, curr_inventory, curr_equipped):
         "hp": curr_HP,
         "gold": curr_gold,
         "inventory": curr_inventory,
-        "equipped": curr_equipped
+        "equipped": curr_equipped,
+        "map": map_positions
     }
     save_file_path = Path.cwd().joinpath("save_file.json")
     with save_file_path.open("w") as file:
@@ -101,7 +103,7 @@ def combat_function(monster_start_HP, curr_HP, curr_equipped):
     monster_start_HP = monster_start_HP - player_damage_monst
     return (monster_start_HP, curr_HP, curr_equipped)
 
-def monster_fight(curr_HP, curr_gold, curr_equipped):
+def monster_fight(curr_HP, curr_gold, curr_equipped, monster_position):
     """Introduces monster and runs combat loop, prompting player to fight to the
     death or flee. Returns player HP and gold."""
     print("\n\n\nYou hear footsteps behind you. You turn around and see ... a monster! It lunges towards you.")
@@ -131,9 +133,11 @@ def monster_fight(curr_HP, curr_gold, curr_equipped):
     if monster_start_HP < 1 and curr_HP > 0:
         winner_gold = random.randint(1,10)
         curr_gold = curr_gold + winner_gold
-        print(f"You defeat the monster. You find {winner_gold} Gold as your eyes get heavy...")
+        monster_position = [random.randint(6,9), random.randint(0,9)]
+
+        print(f"You defeat the monster. You find {winner_gold} Gold!")
         input("Press Enter to continue.")
-    return curr_HP, curr_gold, curr_equipped
+    return curr_HP, curr_gold, curr_equipped, monster_position
 
 def playersleep(curr_HP, player_gold):
     """Introduces sleep option to player. Subtracts gold for gained HP. Returns
@@ -258,3 +262,52 @@ def inventory_menu(curr_equipped, curr_inventory):
             print(f"Sorry, I don't recognize equipment type: {inventory_select}")
 
     return equipment, inventory
+
+
+def traverse_map(map_positions):
+    """
+    Draws a map made up of 32 pixel tiles, and allows the user to move the character with the arrow keys. Returns map positions and what the next action should be.  """
+    pygame.init()
+    tile_size = 32
+    screen = pygame.display.set_mode((tile_size * 10, tile_size * 10))
+    clock = pygame.time.Clock()
+
+    moved = False
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                return map_positions, "quit game"
+            elif event.type != pygame.KEYDOWN:
+                continue
+            elif event.key == pygame.K_UP and map_positions["player_position"][1] > 0:
+                map_positions["player_position"][1] -= 1
+                moved = True
+            elif event.key == pygame.K_DOWN and map_positions["player_position"][1] < 9:
+                map_positions["player_position"][1] += 1
+                moved = True
+            elif event.key == pygame.K_LEFT and map_positions["player_position"][0] > 0:
+                map_positions["player_position"][0] -= 1
+                moved = True
+            elif event.key == pygame.K_RIGHT and map_positions["player_position"][0] < 9:
+                map_positions["player_position"][0] += 1
+                moved = True
+
+        screen.fill("antiquewhite2")
+        pygame.draw.rect(screen, "aquamarine3", pygame.Rect(map_positions["player_position"][0] * tile_size, map_positions["player_position"][1] * tile_size, 32, 32))
+        pygame.draw.circle(screen, "green", ((map_positions["town_position"][0] * tile_size) + (tile_size / 2), (map_positions["town_position"][1] * tile_size) + (tile_size / 2)), 16)
+        pygame.draw.circle(screen, "red", ((map_positions["monster_position"][0] * tile_size) + (tile_size / 2), (map_positions["monster_position"][1] * tile_size) + (tile_size / 2)), 16)
+        pygame.display.flip()
+        clock.tick(30)
+
+        if not moved:
+            continue
+        elif map_positions["player_position"] == map_positions["town_position"]:
+            next_action = "town menu"
+            break
+        elif map_positions["player_position"] == map_positions["monster_position"]:
+            next_action = "fight monster"
+            break
+
+    pygame.quit()
+    return map_positions, next_action
