@@ -13,7 +13,7 @@ adventurers choose their own path.
 
 import gamefunctions
 import random
-
+import wanderingMonster
 play_game = True
 
 shop_items = [
@@ -26,37 +26,49 @@ shop_items = [
 start_menu = gamefunctions.main_menu()
 
 if start_menu == "start_new_game":
-    curr_HP = 30
-    curr_gold = 10
     player_name = input("Enter your player name (Choose wisely!): ")
-    curr_inventory = []
-    curr_equipped = {
-        "weapon": {"name": "none"},
-        "shield": {"name": "none"},
-        "special item": {"name": "none"}
+
+    player = {
+        "HP": 30,
+        "gold": 10,
+        "name": player_name,
+        "inventory": [],
+        "equipped": {
+            "weapon": {"name": "none"},
+            "shield": {"name": "none"},
+            "special item": {"name": "none"}
+        }
     }
-    map_positions = {
+
+    map_data = {
         "player_position": None,
         "town_position": [random.randint(1,4), random.randint(1,8)],
-        "monster_position": [random.randint(6,9), random.randint(0,9)]
+        "monster 1": wanderingMonster.Monster(),
+        "monster 2": wanderingMonster.Monster()
     }
-    map_positions["player_position"] = map_positions["town_position"].copy()
+    map_data["player_position"] = map_data["town_position"].copy()
+
 elif start_menu == "load_save_file":
-    player_name, curr_HP, curr_gold, curr_inventory, curr_equipped, map_positions = gamefunctions.load_game()
+    player = {}
+    map_data = {}
+    gamefunctions.load_game(player, map_data)
 
-gamefunctions.print_welcome(player_name)
+gamefunctions.print_welcome(player["name"])
 
 
 
-while play_game == True and curr_HP > 0:
-    gamefunctions.status_message(curr_HP, curr_gold)
+while play_game == True and player["HP"] > 0:
+    gamefunctions.status_message(player)
     action_select = input("1) Leave town\n2) Sleep (Restore HP for 5 Gold)\n3) Browse Shop\n4) Change Equipment\n5) Save and Quit\n6) Quit Without Save\n")
     if action_select == "1":
         in_town = False
-        while not in_town:
-            map_positions, next_action = gamefunctions.traverse_map(map_positions)
-            if next_action == "fight monster":
-                curr_HP, curr_gold, curr_equipped, map_positions["monster_position"] = gamefunctions.monster_fight(curr_HP, curr_gold, curr_equipped, map_positions["monster_position"])
+        while not in_town and player["HP"] > 0:
+            next_action = gamefunctions.traverse_map(map_data)
+            if "monster" in next_action:
+                gamefunctions.monster_fight(player, map_data[next_action])
+                if map_data["monster 1"].alive == False and map_data["monster 2"].alive == False:
+                    map_data["monster 1"] = wanderingMonster.Monster()
+                    map_data["monster 2"] = wanderingMonster.Monster()
             elif next_action == "town menu":
                 print("You arrive back in to town after a long adventuring day.  Your eyes get heavy...")
                 in_town = True
@@ -64,13 +76,13 @@ while play_game == True and curr_HP > 0:
                 play_game = False
                 break
     elif action_select == "2":
-        curr_HP, curr_gold = gamefunctions.playersleep(curr_HP, curr_gold)
+        gamefunctions.playersleep(player)
     elif action_select == "3":
-        curr_gold, curr_inventory = gamefunctions.shop_menu(curr_gold, curr_inventory, shop_items)
+        gamefunctions.shop_menu(player, shop_items)
     elif action_select == "4":
-        curr_equipped, curr_inventory = gamefunctions.inventory_menu(curr_equipped, curr_inventory)
+        gamefunctions.inventory_menu(player)
     elif action_select == "5":
-        gamefunctions.save_game(player_name, curr_HP, curr_gold, curr_inventory, curr_equipped, map_positions)
+        gamefunctions.save_game(player, map_data)
         break
     elif action_select == "6":
         break
