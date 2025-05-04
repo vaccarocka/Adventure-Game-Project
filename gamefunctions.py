@@ -1,7 +1,7 @@
 #Saige Vacca
 #CSCI 150.50
-#4.13.2025
-#Assignment 12
+#4.27.2025
+#Assignment 14
 
 
 
@@ -265,6 +265,22 @@ def traverse_map(map_data):
     screen = pygame.display.set_mode((tile_size * 10, tile_size * 10))
     clock = pygame.time.Clock()
 
+    try:
+        player_image = pygame.image.load(Path.cwd().joinpath("sprites", "player.png")).convert()
+        player_image = pygame.transform.scale(player_image, (tile_size,tile_size))
+    except:
+        player_image = None
+    try:
+        monster_1_image = pygame.image.load(Path.cwd().joinpath("sprites", f"{map_data["monster 1"].type}.png")).convert()
+        monster_1_image = pygame.transform.scale(monster_1_image, (tile_size,tile_size))
+    except:
+        monster_1_image = None
+    try:
+        monster_2_image = pygame.image.load(Path.cwd().joinpath("sprites", f"{map_data["monster 2"].type}.png")).convert()
+        monster_2_image = pygame.transform.scale(monster_2_image, (tile_size,tile_size))
+    except:
+        monster_2_image = None
+
     moved = 0
     while True:
         for event in pygame.event.get():
@@ -291,10 +307,19 @@ def traverse_map(map_data):
 
 
         screen.fill("antiquewhite2")
-        pygame.draw.rect(screen, "aquamarine3", pygame.Rect(map_data["player_position"][0] * tile_size, map_data["player_position"][1] * tile_size, 32, 32))
+        if player_image:
+            screen.blit(player_image, (map_data["player_position"][0] * tile_size, map_data["player_position"][1] * tile_size))
+        else:
+            pygame.draw.rect(screen, "aquamarine3", pygame.Rect(map_data["player_position"][0] * tile_size, map_data["player_position"][1] * tile_size, 32, 32))
         pygame.draw.circle(screen, "green", ((map_data["town_position"][0] * tile_size) + (tile_size / 2), (map_data["town_position"][1] * tile_size) + (tile_size / 2)), 16)
-        pygame.draw.circle(screen, map_data["monster 1"].color, ((map_data["monster 1"].position[0] * tile_size) + (tile_size / 2), (map_data["monster 1"].position[1] * tile_size) + (tile_size / 2)), 16)
-        pygame.draw.circle(screen, map_data["monster 2"].color, ((map_data["monster 2"].position[0] * tile_size) + (tile_size / 2), (map_data["monster 2"].position[1] * tile_size) + (tile_size / 2)), 16)
+        if monster_1_image:
+            screen.blit(monster_1_image, (map_data["monster 1"].position[0] * tile_size, map_data["monster 1"].position[1] * tile_size))
+        else:
+            pygame.draw.circle(screen, map_data["monster 1"].color, ((map_data["monster 1"].position[0] * tile_size) + (tile_size / 2), (map_data["monster 1"].position[1] * tile_size) + (tile_size / 2)), 16)
+        if monster_2_image:
+            screen.blit(monster_2_image, (map_data["monster 2"].position[0] * tile_size, map_data["monster 2"].position[1] * tile_size))
+        else:
+            pygame.draw.circle(screen, map_data["monster 2"].color, ((map_data["monster 2"].position[0] * tile_size) + (tile_size / 2), (map_data["monster 2"].position[1] * tile_size) + (tile_size / 2)), 16)
         pygame.display.flip()
         clock.tick(30)
 

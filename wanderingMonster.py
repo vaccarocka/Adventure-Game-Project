@@ -1,3 +1,8 @@
+#Saige Vacca
+#CSCI 150.50
+#4.27.2025
+#Assignment 14
+
 import random
 
 class Monster:
