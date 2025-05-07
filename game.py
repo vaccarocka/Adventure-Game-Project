@@ -1,7 +1,7 @@
 #Saige Vacca
 #CSCI 150.50
-#4.27.2025
-#Assignment 14
+#5.4.2025
+#Assignment 15
 
 """
 game.py
@@ -14,13 +14,18 @@ adventurers choose their own path.
 import gamefunctions
 import random
 import wanderingMonster
+from itemList import itemList
 play_game = True
 
-shop_items = [
-    {"name": "Sword", "type": "weapon", "uses": 10, "price":3, "description": "increases damage that you do by 10"},
-    {"name": "Buckler", "type": "shield", "uses": 25, "price":3, "description": "reduces damage that you take a little bit."},
+shop_items = itemList([
+    {"name": "Shortsword", "type": "weapon", "uses": 10, "price":3, "damage increase": 10, "description": "increases damage that you do by 10"},
+    {"name": "Longsword", "type": "weapon", "uses": 10, "price":8, "damage increase": 15, "description": "increases damage that you do by 15"},
+    {"name": "Greatsword", "type": "weapon", "uses": 10, "price":15, "damage increase": 22, "description": "increases damage that you do by 22"},
+    {"name": "Buckler", "type": "shield", "uses": 25, "price":3, "block range": (3,8), "description": "reduces damage that you take a little bit."},
+    {"name": "Kite Shield", "type": "shield", "uses": 25, "price":8, "block range": (5,13), "description": "reduces damage that you take a fair amount."},
+    {"name": "Tower Shield", "type": "shield", "uses": 25, "price":15, "block range": (7,19), "description": "reduces damage that you take a lot."},
     {"name": "Shiny Ring", "type": "special item", "uses": 1, "price": 10, "description": "allows you to defeat one monster immediately, single use."}
-]
+])
 
 
 start_menu = gamefunctions.main_menu()
@@ -32,11 +37,11 @@ if start_menu == "start_new_game":
         "HP": 30,
         "gold": 10,
         "name": player_name,
-        "inventory": [],
+        "inventory": itemList(),
         "equipped": {
-            "weapon": {"name": "none"},
-            "shield": {"name": "none"},
-            "special item": {"name": "none"}
+            "weapon": None,
+            "shield": None,
+            "special item": None
         }
     }
 

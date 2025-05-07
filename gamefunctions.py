@@ -1,7 +1,7 @@
 #Saige Vacca
 #CSCI 150.50
-#4.27.2025
-#Assignment 14
+#5.4.2025
+#Assignment 15
 
 
 
@@ -16,6 +16,8 @@ import json
 from pathlib import Path
 import pygame
 import wanderingMonster
+from itemGroup import itemGroup
+from itemList import itemList
 
 def main_menu():
     """Start up game menu with introduction. Allows player to choose new game
@@ -35,6 +37,7 @@ def load_game(player, map_data):
     with save_file_path.open("r") as file:
         game_data = json.load(file)
     player.update(game_data["player"])
+    player["inventory"] = itemList(game_data["inventory"])
     map_data.update(game_data["map_data"])
     map_data["monster 1"] = wanderingMonster.Monster(game_data["monster 1"])
     map_data["monster 2"] = wanderingMonster.Monster(game_data["monster 2"])
@@ -44,8 +47,10 @@ def save_game(player, map_data):
     as a JSON file for later retrieval."""
     monster_1 = map_data.pop("monster 1")
     monster_2 = map_data.pop("monster 2")
+    inventory = player.pop("inventory").list
     game_data = {
         "player": player,
+        "inventory": inventory,
         "map_data": map_data,
         "monster 1": monster_1.get_dictionary(),
         "monster 2": monster_2.get_dictionary()
@@ -73,27 +78,27 @@ def combat_function(player, monster):
     """Display and run turn based combat between player and monster. Returns
     player and monster HP values post-battle."""
     monst_damage_pl = random.randint(*monster.damage_range)
-    if player["equipped"]["shield"]["name"].lower() == "buckler":
-        monst_damage_pl -= random.randint(3,8)
+    if player["equipped"]["shield"]:
+        monst_damage_pl -= random.randint(*player["equipped"]["shield"]["block range"])
         if monst_damage_pl <= 0:
             monst_damage_pl = 0
-            print(f"The {monster.type} tried to claw at you, but your shield negated all damage!")
+            print(f"The {monster.type} tried to claw at you, but your {player["equipped"]["shield"]["name"]} negated all damage!")
         else:
-            print(f"The {monster.type} attacked, but the shield reduced damage to just {monst_damage_pl}. Phew!")
+            print(f"The {monster.type} attacked, but your {player["equipped"]["shield"]["name"]} reduced damage to just {monst_damage_pl}. Phew!")
         player["equipped"]["shield"]["uses"] -= 1
         if player["equipped"]["shield"]["uses"] < 1:
-            player["equipped"]["shield"] = {"name": "none"}
+            player["equipped"]["shield"] = None
             print("Your shield snaps in half!!!")
     else:
         print(f"You take a blow! Damage dealt by {monster.type}: {monst_damage_pl}!")
     player["HP"] -= monst_damage_pl
     player_damage_monst = random.randint(1,15)
-    if player["equipped"]["weapon"]["name"].lower() == "sword":
-        player_damage_monst += 10
+    if player["equipped"]["weapon"]:
+        player_damage_monst += player["equipped"]["weapon"]["damage increase"]
         print(f"You draw your weapon and swing! You land a blow. Damage dealt by player: {player_damage_monst}!")
         player["equipped"]["weapon"]["uses"] -= 1
         if player["equipped"]["weapon"]["uses"] < 1:
-            player["equipped"]["weapon"] = {"name": "none"}
+            player["equipped"]["weapon"] = None
             print("Your sword snaps in half!!!")
     else:
         print(f"You karate chop the {monster.type}! Damage dealt by player: {player_damage_monst}!")
@@ -107,12 +112,12 @@ def monster_fight(player, monster):
     print(f"\n\n\nYou hear footsteps behind you. You turn around and see ... a {monster.type}! It lunges towards you.")
     while player["HP"] > 0 and monster.hp > 0:
         print("\n\n\n")
-        if player["equipped"]["weapon"]["name"].lower() == "sword":
-            print(f"You currently have a Sword equipped.  It increases your damage by 10, and has {player["equipped"]["weapon"]["uses"]} uses left.")
-        if player["equipped"]["shield"]["name"].lower() == "buckler":
-            print(f"You currently have a Buckler equipped.  It reduces your damage by a number from 3 to 8, and has {player["equipped"]["shield"]["uses"]} uses left.")
+        if player["equipped"]["weapon"]:
+            print(f"You currently have a {player["equipped"]["weapon"]["name"]} equipped.  It {player["equipped"]["weapon"]["description"]}, and has {player["equipped"]["weapon"]["uses"]} uses left.")
+        if player["equipped"]["shield"]:
+            print(f"You currently have a {player["equipped"]["shield"]["name"]} equipped.  It {player["equipped"]["shield"]["description"]}, and has {player["equipped"]["shield"]["uses"]} uses left.")
         fight_options = "1) Fight!\n2) Flee!\n"
-        if player["equipped"]["special item"]["name"].lower() == "shiny ring":
+        if player["equipped"]["special item"]:
             print(f"You currently have a Shiny Ring equipped.  It has {player["equipped"]["special item"]["uses"]} uses left.")
             fight_options += f"3) Befriend {monster.type} using the Shiny Ring"
         print(f"Player Current HP: {player["HP"]}, {monster.type.title()} Current HP: {monster.hp}")
@@ -121,9 +126,9 @@ def monster_fight(player, monster):
             combat_function(player, monster)
         elif Fight_selection == "2":
             break
-        elif Fight_selection == "3" and curr_equipped["special item"]["name"].lower() == "shiny ring":
+        elif Fight_selection == "3" and player["equipped"]["special item"]:
             print(f"You reveal the Shiny Ring, and the {monster.type} says, \"I've been looking for this! Thanks you so very much!\" and they run back into the forest (leaving behind a pile of gold coins).")
-            curr_equipped["special item"] = {"name": "none"}
+            player["equipped"]["special item"] = None
             monster.hp = 0
         else:
             print("Try again Nerd!")
@@ -144,58 +149,7 @@ def playersleep(player):
     player["HP"] += 10
     input("Press Enter to continue.")
 
-def display_items(item_list, detail_list=[]):
-    """Takes a list of item dictionaries and prints out their name and
-    description. Allows to optionally print out other details about each item,
-    including uses left, price, and item type."""
-    item_strings = []
-    if item_list == []:
-        return "\nnothing\n"
 
-    for item in item_list:
-        new_item_string = f"\n{item["name"]}: {item["description"]}"
-        for detail in detail_list:
-            if detail not in item.keys():
-                pass
-            elif detail == "type":
-                new_item_string += f"\n    Type: {item["type"]}"
-            elif detail == "price":
-                new_item_string += f"\n    Price: {item["price"]} gold"
-            elif detail == "uses":
-                new_item_string += f"\n    Uses left: {item["uses"]}"
-        item_strings.append(new_item_string)
-    return "".join(item_strings) + "\n"
-
-def get_item_names(item_list):
-    """Takes a list of item dictionaries and returns a list of the name values."""
-    item_names = []
-    for item in item_list:
-        item_names.append(item["name"].lower())
-    return item_names
-
-def get_item_by_name(item_list, name):
-    """Takes a list of item dictionaries and returns the dictionary that has a
-    matching name value."""
-    for item in item_list:
-        if item["name"].lower() == name.lower():
-            return item
-
-def get_items_by_type(item_list, type):
-    """Takes a list of item dictionaries and returns a new list with items of
-    matching types."""
-    new_item_list = []
-    for item in item_list:
-        if item["type"] == type:
-            new_item_list.append(item)
-    return new_item_list
-
-def remove_item_by_name(item_list, name):
-    """Takes a list of item dictionaries and removes dictionary with matching
-    name value"""
-    for i in range(len(item_list)):
-        if item_list[i]["name"].lower() == name.lower():
-            item_list.pop(i)
-            return
 
 def purchase_item(player, item):
     """Subtracts item price from player gold when purchased. Adds the item to
@@ -212,50 +166,117 @@ def shop_menu(player, shop_items):
     items."""
     print("\n\n\nYou enter the shop and are greeted by the shopkeep")
     while True:
-        print(f"\n\n\nCurrent gold: {player["gold"]}\nYour current inventory: {display_items(player["inventory"])}")
-        print(f"\nShop inventory: {display_items(shop_items, ["type", "price"])}")
+        print(f"\n\n\nCurrent gold: {player["gold"]}\nYour current inventory: {player["inventory"].display()}")
+        print(f"\nShop inventory: {shop_items.display(["type", "price"])}")
         shop_select = input("Type the name of the item you would like to buy, or 'Q' to quit\n")
         if shop_select.lower() == "q":
             return
-        elif shop_select.lower() in get_item_names(shop_items):
-            for item in shop_items:
+        elif shop_select.lower() in shop_items.item_names():
+            for item in shop_items.list:
                 if item["name"].lower() == shop_select.lower():
                     purchase_item(player, item)
                     break
         else:
             print(f"Sorry, I don't know what a {shop_select} is.")
 
-def equip_item(player, type):
-    """Switches items between player equipment and item inventory."""
-    if player["equipped"][type]["name"] != "none":
-        player["inventory"].append(player["equipped"][type])
-    print(f"\nWhich item to equip as {type}? {display_items(get_items_by_type(player["inventory"], type))}")
-    while True:
-        equip_select = input("Type the name of the item you would like to equip.\n")
-        if equip_select.lower() in get_item_names(get_items_by_type(player["inventory"], type)):
-            for item in player["inventory"]:
-                if item["name"].lower() == equip_select.lower():
-                    player["equipped"][type] = item
-                    remove_item_by_name(player["inventory"], item["name"])
-                    return
-        else:
-            print("Sorry, you didn't enter the name of an item.")
+def equip_item(player, item):
+    """Takes a player dictionary and an item dictionary, removes the item from the player's inventory, adding to their equipment.
+    If there is already an item of the same type equipped, move it to inventory before equipping the passed item argument."""
+    if player["equipped"][item["type"]]:
+        player["inventory"].append(player["equipped"][item["type"]])
+    player["equipped"][item["type"]] = item
+    player["inventory"].remove_item(item)
+
+
+def unequip_item(player, item):
+    """takes a player dictionary and an item dictionary, removes the item from the player's equipment, adding it to the player inventory."""
+    player["inventory"].append(player["equipped"][item["type"]])
+    player["equipped"][item["type"]] = None
+
 
 def inventory_menu(player):
-    """Displays player equipped items and player inventory items. Prompts player to equip
-    by item type."""
-    while True:
-        print(f"\n\n\nYour current inventory: {display_items(player["inventory"], ["type", "uses"])}")
-        print(f"Currently equipped items:\nWeapon: {player["equipped"]["weapon"]["name"]}\nShield: {player["equipped"]["shield"]["name"]}\nSpecial Item: {player["equipped"]["special item"]["name"]}")
-        inventory_select = input("Type 'Weapon', 'Shield', or 'Special Item' to change equipment.  Type 'Q' to quit.").lower()
-        if inventory_select == "q":
-            return
-        elif inventory_select == "weapon" or inventory_select == "shield" or inventory_select == "special item":
-            equip_item(player, inventory_select)
-        else:
-            print(f"Sorry, I don't recognize equipment type: {inventory_select}")
+    """Launches graphical menu that displays the player's inventory alongside their equipment slots, and allows equipping and unequipping
+    items by clicking and dragging items between the item slots."""
+    pygame.init()
+    weapon_group = itemGroup((35, 203), "weapon")
+    shield_group = itemGroup((35, 403), "shield")
+    special_group = itemGroup((35, 603), "special item")
+    equipped_weapon = itemGroup((573, 203), "weapon", 1, is_equipment_slot = True)
+    equipped_shield = itemGroup((573, 403), "shield", 1, is_equipment_slot = True)
+    equipped_special = itemGroup((573, 603), "special item", 1, is_equipment_slot = True)
+    screen = pygame.display.set_mode((800, 800))
+    clock = pygame.time.Clock()
+    background = pygame.image.load(Path.cwd().joinpath("sprites", "inventory_menu.png")).convert()
+    selected = None
 
-    return
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                return
+
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                """checks if a grid space containing an item is clicked, and if so it is copied into the 'selected' variable"""
+                for group in [weapon_group, shield_group, special_group, equipped_weapon, equipped_shield, equipped_special]:
+                    for grid in group.group:
+                        if not grid["item"]:
+                            continue
+                        elif grid["rect"].collidepoint(event.pos):
+                            selected = grid.copy()
+                            selected["rect"] = pygame.Rect((grid["rect"].x, grid["rect"].y), group.grid_size)
+
+
+
+            elif event.type == pygame.MOUSEBUTTONUP:
+                """checks if the mouse is released on an empty grid space while an item is selected.  Then checks if the item you
+                are dropping in the space is compatible, and finally runs either equip_item() or unequip_item() appropriately."""
+                for group in [weapon_group, shield_group, special_group, equipped_weapon, equipped_shield, equipped_special]:
+                    for grid in group.group:
+                        if grid["item"] and not group.is_equipment_slot:
+                            continue
+                        elif not selected:
+                            continue
+                        elif grid["rect"].collidepoint(event.pos) and not group.is_item_in_group(selected["item"]):
+                            if group.type == selected["item"]["type"] and group.is_equipment_slot:
+                                equip_item(player, selected["item"])
+                                selected = None
+                            elif group.type == selected["item"]["type"] and not group.is_equipment_slot:
+                                unequip_item(player, selected["item"])
+                                selected = None
+                selected = None
+            else:
+                pass
+
+        """Updates all the grid groups with the current items in inventory and equipment.  This allows the grid
+        spaces to update after items are equipped or moved around."""
+        weapon_group.update(player["inventory"].get_items(type = "weapon"))
+        shield_group.update(player["inventory"].get_items(type = "shield"))
+        special_group.update(player["inventory"].get_items(type = "special item"))
+        equipped_weapon.update([player["equipped"]["weapon"]])
+        equipped_shield.update([player["equipped"]["shield"]])
+        equipped_special.update([player["equipped"]["special item"]])
+
+        """First blit the background, then go through all grid spaces in all groups and blit them on top of the background, unless they are the selected item.
+        Finally, blit the selected item (if any) to the current position of the mouse cursor."""
+        screen.blit(background, (0,0))
+        for group in [weapon_group, shield_group, special_group, equipped_weapon, equipped_shield, equipped_special]:
+            for grid in group.group:
+                if not grid["image"]:
+                    continue
+                elif not selected:
+                    pass
+                elif grid["item"]["uuid"] == selected["item"]["uuid"]:
+                    continue
+                screen.blit(grid["image"], (grid["rect"].x, grid["rect"].y))
+        if selected:
+            selected["rect"].x = pygame.mouse.get_pos()[0]
+            selected["rect"].y = pygame.mouse.get_pos()[1]
+            screen.blit(selected["image"], (selected["rect"].x, selected["rect"].y))
+
+
+        pygame.display.flip()
+        clock.tick(30)
+
 
 def traverse_map(map_data):
     """
@@ -266,17 +287,17 @@ def traverse_map(map_data):
     clock = pygame.time.Clock()
 
     try:
-        player_image = pygame.image.load(Path.cwd().joinpath("sprites", "player.png")).convert()
+        player_image = pygame.image.load(Path.cwd().joinpath("sprites", "creatures", "player.png")).convert()
         player_image = pygame.transform.scale(player_image, (tile_size,tile_size))
     except:
         player_image = None
     try:
-        monster_1_image = pygame.image.load(Path.cwd().joinpath("sprites", f"{map_data["monster 1"].type}.png")).convert()
+        monster_1_image = pygame.image.load(Path.cwd().joinpath("sprites", "creatures", f"{map_data["monster 1"].type}.png")).convert()
         monster_1_image = pygame.transform.scale(monster_1_image, (tile_size,tile_size))
     except:
         monster_1_image = None
     try:
-        monster_2_image = pygame.image.load(Path.cwd().joinpath("sprites", f"{map_data["monster 2"].type}.png")).convert()
+        monster_2_image = pygame.image.load(Path.cwd().joinpath("sprites", "creatures", f"{map_data["monster 2"].type}.png")).convert()
         monster_2_image = pygame.transform.scale(monster_2_image, (tile_size,tile_size))
     except:
         monster_2_image = None
@@ -307,10 +328,6 @@ def traverse_map(map_data):
 
 
         screen.fill("antiquewhite2")
-        if player_image:
-            screen.blit(player_image, (map_data["player_position"][0] * tile_size, map_data["player_position"][1] * tile_size))
-        else:
-            pygame.draw.rect(screen, "aquamarine3", pygame.Rect(map_data["player_position"][0] * tile_size, map_data["player_position"][1] * tile_size, 32, 32))
         pygame.draw.circle(screen, "green", ((map_data["town_position"][0] * tile_size) + (tile_size / 2), (map_data["town_position"][1] * tile_size) + (tile_size / 2)), 16)
         if monster_1_image:
             screen.blit(monster_1_image, (map_data["monster 1"].position[0] * tile_size, map_data["monster 1"].position[1] * tile_size))
@@ -320,6 +337,10 @@ def traverse_map(map_data):
             screen.blit(monster_2_image, (map_data["monster 2"].position[0] * tile_size, map_data["monster 2"].position[1] * tile_size))
         else:
             pygame.draw.circle(screen, map_data["monster 2"].color, ((map_data["monster 2"].position[0] * tile_size) + (tile_size / 2), (map_data["monster 2"].position[1] * tile_size) + (tile_size / 2)), 16)
+        if player_image:
+            screen.blit(player_image, (map_data["player_position"][0] * tile_size, map_data["player_position"][1] * tile_size))
+        else:
+            pygame.draw.rect(screen, "aquamarine3", pygame.Rect(map_data["player_position"][0] * tile_size, map_data["player_position"][1] * tile_size, 32, 32))
         pygame.display.flip()
         clock.tick(30)
 

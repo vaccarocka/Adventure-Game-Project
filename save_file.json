@@ -1,0 +1,61 @@
+{
+    "player": {
+        "HP": 25,
+        "gold": 12,
+        "name": "Saingel",
+        "equipped": {
+            "weapon": {
+                "name": "Longsword",
+                "type": "weapon",
+                "uses": 9,
+                "price": 8,
+                "damage increase": 15,
+                "description": "increases damage that you do by 15",
+                "uuid": "4cc3f6ff-2200-40b1-af0e-53fbc314ef34"
+            },
+            "shield": null,
+            "special item": null
+        }
+    },
+    "inventory": [],
+    "map_data": {
+        "player_position": [
+            2,
+            1
+        ],
+        "town_position": [
+            2,
+            1
+        ]
+    },
+    "monster 1": {
+        "type": "wyrm",
+        "hp": 20,
+        "gold": 15,
+        "damage_range": [
+            5,
+            10
+        ],
+        "color": "darkred",
+        "position": [
+            8,
+            0
+        ],
+        "alive": true
+    },
+    "monster 2": {
+        "type": "wyrm",
+        "hp": -3,
+        "gold": 10,
+        "damage_range": [
+            5,
+            10
+        ],
+        "color": "darkred",
+        "position": [
+            -1,
+            -1
+        ],
+        "alive": false
+    }
+}

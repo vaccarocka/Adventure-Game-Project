@@ -1,0 +1,46 @@
+#Saige Vacca
+#CSCI 150.50
+#5.4.2025
+#Assignment 15
+
+
+Objective:
+Implement a GUI for managing player inventory and equipped items, replacing the text based "Change Equipment" option in the main game loop.
+
+Goals:
+1. Selecting the "Change Equipment" option from the town menu should now launch a pygame window.  Player's items in both their inventory
+and equipment should be displayed as icons.
+
+2. Clicking and dragging icons between the inventory and equipment slots should trigger the appropriate functions to modify the player's inventory.
+
+3. The player should still be only allowed to equip one item of each type, so the function needs to be able to check if the space that
+the player is attempting to place the item in is valid, otherwise it should return the item to its original space.
+
+Self Evaluation and Reflection:
+
+	The feature implementation went well, and I was able to make extensive use of the things I learned from creating the Wandering Monster Class and the previous pygame assignment for leaving the town.  Although there were many parallels, I ran into several challenges along the way.  The
+concept of representing the inventory as a list of items worked well enough, but things became messier and more complicated as I added functions
+and tried to implement the GUI.  I decided to extend the "list of items" concept into a new object class.  This class allowed me to organize a
+lot of the functions under it as methods, and also made the new GUI function cleaner since I could run methods on the list without passing so many
+arguments around.  I ended up doing this again with the new "itemGroup" class, which let me manage equipment slots in a simpler way and I could
+instantiate new objects for the 6 different groups of slots.
+	One big problem I ran into was that the equipment list was a dictionary of 
+dictionaries, rather than a list of dictionaries like the inventory.  This subtle difference meant that the item list class I made couldn't be
+reused easily for the equipment, but the "one item of each type" seemed to suit the dictionary of dictionaries model quite well.  I compromised by
+not using the itemList class for the equipment, but including a new attribute in the itemGroup class that distinguishes between inventory groups
+and equipment groups.  I then ran checks on if "itemGroup.is_equipment_slot == True" whenever it was relevant.  Admittedly this seems like an
+ugly solution, but allowed me to finish the new feature without making major changes to previous code.  If I had more time I might create a
+separate class for the player equipment, or perhaps set it up as a child class of the itemList with a few unique attributes.  For organization
+and easing future development I might also create a class for the player character.  Having monster objects worked really well, and so I think
+having the player represented as an object could benefit the code similarly, as well as flattening out the ever-deepening-dictionary-nest that the
+player variable currently is.
+	Another major issue I ran into was that now I needed to be able to distinguish between duplicates of the same item if for instance the 
+player purchased 5 of the same sword.  Before the functions would just catch the first one with a matching name and operate on it, but if a player
+can individually click on them I had to be able to tell them apart in the code.  I found a solution in the built-in python module, "uuid".  After
+importing this module I was able to generate unique IDs for every item that is added to the player's inventory.  I then rewrote some of the methods
+that selected items by name, and instead had them reference the UUIDs.
+	Aside from these two problems, I faced all sorts of bug fixes such as realizing I had set the default equipment state as the string "none"
+rather than the keyword None.  When I traced a problem back to this I ended up changing the declaration of the equipment variable, and then had to go through all the rest of the code and fix it elsewhere.  I could probably have made do without this trouble but it allowed me to avoid checking if
+variables were equal to either None or "none" and made things much more predictable.  I also had to rewrite sections of the other functions to allow
+the now increased options at the shop, as I added more swords and shields to make things more interesting.  All in all I am pleased with how things
+turned out, and already have ideas for other features or improvements that could be added in.
